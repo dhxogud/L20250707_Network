@@ -4,8 +4,14 @@
 
 #include <iostream>
 #include <WinSock2.h>
+#include "Windows.h"
+#include "process.h"
 
 #pragma comment(lib,"ws2_32")
+
+
+HANDLE ThreadHandles;
+
 
 int main()
 {
@@ -24,19 +30,19 @@ int main()
 
 	listen(ListenSocket, 5);
 
+	// fd_set : File Descripter(파일 설명자) 의 집합 구조체, 명칭은 리눅스 운영체제에서 따온거지만, 윈도우에서 저걸 소켓 구조체용으로 따로 구현해둠
+		// FD_ZERO : fd_set 집합 구조체의 초기화
+		// FD_SET : fd_set 집합 구조체 안에 File Descripter 구조체를 집어넣기 (Add 추가)
 	fd_set ReadSockets;
-
 	FD_ZERO(&ReadSockets);
 	FD_SET(ListenSocket, &ReadSockets);
+
 	while (true)
 	{
 		// select 함수 리뷰
-		// fd_set : File Descripter(파일 설명자) 의 집합 구조체, 명칭은 리눅스 운영체제에서 따온거지만, 윈도우에서 저걸 소켓 구조체용으로 따로 구현해둠
-		// FD_ZERO : fd_set 집합 구조체의 초기화
-		// FD_SET : fd_set 집합 구조체 안에 File Descripter 구조체를 집어넣기 (Add 추가)
 		// *exceptfds : 예외 상황(에러 아님), 다른 방식의 프로토콜을 감지하기 위해 쓰지만 지금은 필요없음
-		// timeval timeout : CPU가 OS에게 작업 처리 완료여부를 물어보는 시간 간격, 
-			// 그럼 걍 float 쓰면 될것이지 왜 구조체 형태냐고? 예전에 Cpu가 float 연산처리를 못해서..
+		// timeval timeout : CPU가 OS에게 작업 처리 완료여부를 물어보는 시간 간격
+			// 그럼 걍 float 쓰면 될것이지 왜 구조체 형태냐고? 예전 CPU는 float 연산처리를 못해서..
 
 		fd_set RecvSocketCopys;
 		// 원본은 가지고 있고 복제본을 줌
@@ -66,9 +72,9 @@ int main()
 				// FD_ISSET : 원본과 복제본의 달라진 점 확인
 				if (FD_ISSET(ReadSockets.fd_array[i], &RecvSocketCopys))
 				{
-					// 맨 처음 ReadSockets 에 들어간 소켓은 서버의 ListenSocket 하나이기 때문에 맨 처음에 변경된 ChangeSocketCount = 1 이라면,
-					// 무조건 ListenSocket이다.
-					if (ReadSockets.fd_array[i] == ListenSocket)
+					// 맨 처음 ReadSockets 에 들어간 소켓은 서버의 ListenSocket 하나이기 때문에 맨 처음에 ReadSockets 에서 
+					// 변경된 소켓이라면 무조건 ListenSocket이다. 
+					if (ReadSockets.fd_array[i] == ListenSocket) // 즉, ListenSocket으로 받아온 ClientSocket이 추가되었다는 이야기
 					{
 						SOCKADDR_IN ClientSocketAddr;
 						int ClientSocketAddrSize = sizeof(ClientSocketAddr);
