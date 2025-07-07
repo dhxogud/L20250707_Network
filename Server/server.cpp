@@ -36,11 +36,11 @@ int main()
 	int SentBytes = 0;
 	char Buffer[1024] = { 0, };
 	do {
-		RecvBytes = recv(ClientSocket, Buffer, sizeof(Buffer), MSG_WAITALL);
+		RecvBytes = recv(ClientSocket, Buffer, sizeof(Buffer), 0);
 		cout << "Recive Message : " << Buffer << endl;
 
 		send(ClientSocket, Buffer, sizeof(Buffer), 0);
-	} while (RecvBytes != 0);
+	} while (RecvBytes > 0);
 
 
 	closesocket(ClientSocket);

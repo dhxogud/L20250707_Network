@@ -29,10 +29,10 @@ int main()
 	char Buffer[1024] = { 0, };
 	do {
 		send(ServerSocket, Message, sizeof(Message), 0);
-		RecvBytes = recv(ServerSocket, Buffer, sizeof(Buffer), MSG_WAITALL);
+		RecvBytes = recv(ServerSocket, Buffer, sizeof(Buffer), 0);
 		cout << "Server Receive Message :  " << Buffer << endl;
 
-	} while (RecvBytes != 0);
+	} while (RecvBytes > 0);
 
 
 	closesocket(ServerSocket);
