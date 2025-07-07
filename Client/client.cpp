@@ -25,15 +25,14 @@ int main()
 	connect(ServerSocket, (SOCKADDR*)&ServerSockAddr, sizeof(ServerSockAddr));
 
 	int RecvBytes = 0;
-	int SentBytes = 0;
-	char Message[1024] = { "Hello Server?" };
+	char Message[1024] = { "Hello World" };
 	char Buffer[1024] = { 0, };
 	do {
 		send(ServerSocket, Message, sizeof(Message), 0);
-		recv(ServerSocket, Buffer, sizeof(Buffer), 0);
-		cout << Buffer << endl;
+		RecvBytes = recv(ServerSocket, Buffer, sizeof(Buffer), MSG_WAITALL);
+		cout << "Server Receive Message :  " << Buffer << endl;
 
-	} while (true);
+	} while (RecvBytes != 0);
 
 
 	closesocket(ServerSocket);

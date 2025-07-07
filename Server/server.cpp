@@ -34,15 +34,13 @@ int main()
 
 	int RecvBytes = 0;
 	int SentBytes = 0;
-	char Message[1024] = { "Hello Client?" };
 	char Buffer[1024] = { 0, };
 	do {
-		recv(ClientSocket, Buffer, sizeof(Buffer), 0);
-		cout << Buffer << endl;
+		RecvBytes = recv(ClientSocket, Buffer, sizeof(Buffer), MSG_WAITALL);
+		cout << "Recive Message : " << Buffer << endl;
 
-		send(ClientSocket, Message, sizeof(Message), 0);
-
-	} while (true);
+		send(ClientSocket, Buffer, sizeof(Buffer), 0);
+	} while (RecvBytes != 0);
 
 
 	closesocket(ClientSocket);
