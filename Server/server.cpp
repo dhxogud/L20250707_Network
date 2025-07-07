@@ -3,47 +3,68 @@
 #include <iostream>
 #include <WinSock2.h>
 
-#pragma comment( lib, "ws2_32.lib")
-
-using namespace std;
+#pragma comment(lib,"ws2_32")
 
 int main()
 {
-
-	WSADATA wsaData;
-
+	WSAData wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-	SOCKET ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	SOCKET ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-	sockaddr_in ListenSockAddr;
-	memset(&ListenSockAddr, 0, sizeof(ListenSockAddr));
-	ListenSockAddr.sin_family = PF_INET;
-	ListenSockAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	ListenSockAddr.sin_port = htons(30303);
-
-	bind(ListenSocket, (SOCKADDR*)&ListenSockAddr, sizeof(ListenSockAddr));
+	SOCKADDR_IN ListenSocketAddr;
+	memset(&ListenSocketAddr, 0, sizeof(ListenSocketAddr));
+	ListenSocketAddr.sin_family = PF_INET;
+	ListenSocketAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	ListenSocketAddr.sin_port = htons(32000);
+	bind(ListenSocket, (SOCKADDR*)&ListenSocketAddr, sizeof(ListenSocketAddr));
 
 	listen(ListenSocket, 5);
 
-	sockaddr_in ClientSockAddr;
-	memset(&ClientSockAddr, 0, sizeof(ClientSockAddr));
-	int ClientSockLength = sizeof(ClientSockAddr);
+	while (true)
+	{
+		// select 함수 리뷰
+		// fd_set : File De
+		// FD_ZERO : ReadSockets 구조체 초기화
+		//  // ReadSockets 안에 ListenSocket을 집어넣기 (Add 추가)
+		// *exceptfds : 예외 상황(에러 아님), 다른 방식의 프로토콜을 감지하기 위해 쓰지만 지금은 필요없음
+		// timeval timeout : CPU가 OS에게 작업 처리 완료여부를 물어보는 시간 간격
+		fd_set ReadSockets;
+		FD_ZERO(&ReadSockets);
+		FD_SET(ListenSocket, &ReadSockets);
+		struct timeval Timeout;
+		Timeout.tv_sec = 0;
+		Timeout.tv_usec = 1000;
+		//polling
+		int ChangeSocketCount = select(0, &ReadSockets, 0, 0, &Timeout);
+		if (ChangeSocketCount <= 0)
+		{
+			//다른 서버 작업
+			std::cout << "서버 작업해야지" << std::endl;
+			continue;
+		}
+		//네트워크 작업
+		else
+		{
+			SOCKADDR_IN ClientSocketAddr;
+			int ClientSocketAddrSize = sizeof(ClientSocketAddr);
+			SOCKET ClientSocket = accept(ListenSocket, (SOCKADDR*)&ClientSocketAddr, &ClientSocketAddrSize);
 
-	SOCKET ClientSocket = accept(ListenSocket, (SOCKADDR*) &ClientSockAddr, &ClientSockLength);
+			while (true)
+			{
+				char RecvBuffer[1024] = {};
+				int RecvBytes = recv(ClientSocket, RecvBuffer, 1024, 0);
+				if (RecvBytes <= 0)
+				{
+					std::cout << "Disconnect" << std::endl;
+					break;
+				}
+				send(ClientSocket, RecvBuffer, 1024, 0);
+			}
 
-	int RecvBytes = 0;
-	int SentBytes = 0;
-	char Buffer[1024] = { 0, };
-	do {
-		RecvBytes = recv(ClientSocket, Buffer, sizeof(Buffer), 0);
-		cout << "Recive Message : " << Buffer << endl;
-
-		send(ClientSocket, Buffer, sizeof(Buffer), 0);
-	} while (RecvBytes > 0);
-
-
-	closesocket(ClientSocket);
+			closesocket(ClientSocket);
+		}
+	}
 	closesocket(ListenSocket);
 
 	WSACleanup();

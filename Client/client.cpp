@@ -3,39 +3,33 @@
 #include <iostream>
 #include <WinSock2.h>
 
-#pragma comment( lib, "ws2_32.lib")
-
-using namespace std;
-
+#pragma comment(lib,"ws2_32")
 
 int main()
 {
-	WSADATA wsaData;
-
+	WSAData wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-	SOCKET ServerSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	SOCKET ListenSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-	sockaddr_in ServerSockAddr;
-	memset(&ServerSockAddr, 0, sizeof(ServerSockAddr));
-	ServerSockAddr.sin_family = PF_INET;
-	ServerSockAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	ServerSockAddr.sin_port = htons(30303);
-	
-	connect(ServerSocket, (SOCKADDR*)&ServerSockAddr, sizeof(ServerSockAddr));
+	SOCKADDR_IN ListenSocketAddr;
+	ListenSocketAddr.sin_family = PF_INET;
+	ListenSocketAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	ListenSocketAddr.sin_port = htons(32000);
+	connect(ListenSocket, (SOCKADDR*)&ListenSocketAddr, sizeof(ListenSocketAddr));
 
-	int RecvBytes = 0;
-	char Message[1024] = { "Hello World" };
-	char Buffer[1024] = { 0, };
-	do {
-		send(ServerSocket, Message, sizeof(Message), 0);
-		RecvBytes = recv(ServerSocket, Buffer, sizeof(Buffer), 0);
-		cout << "Server Receive Message :  " << Buffer << endl;
+	while (true)
+	{
+		char Buffer[1024] = {};
+		std::cin >> Buffer;
+		send(ListenSocket, Buffer, 1024, 0);
 
-	} while (RecvBytes > 0);
+		char RecvBuffer[1024] = {};
+		recv(ListenSocket, RecvBuffer, 1024, 0);
+		std::cout << "Server : " << RecvBuffer << std::endl;
+	}
 
-
-	closesocket(ServerSocket);
+	closesocket(ListenSocket);
 
 	WSACleanup();
 
